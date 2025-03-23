@@ -26,7 +26,7 @@ const Home = () => {
         </h2> */}
 
         <ul style={styles.navList}>
-          <li style={styles.navItem} onClick={() => navigate("/orders/orders")}>
+          <li style={styles.navItem} onClick={() => navigate("/orders")}>
             <FaBox />
             {!isCollapsed && "Órdenes"}
           </li>
