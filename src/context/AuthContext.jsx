@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import api from '../utils/Api'; // Asegúrate de que la ruta sea correcta
+import api from '../utils/Api';
 
 const AuthContext = createContext();
 

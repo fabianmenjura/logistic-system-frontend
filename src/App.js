@@ -5,6 +5,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Home from './components/Home';
 import OrderList from "./components/orders/OrderList";
+import CreateOrder from "./components/orders/CreateOrder";
 
 const App = () => {
     return (
@@ -15,6 +16,7 @@ const App = () => {
                     <Route path="/register" element={<Register />} />
                     <Route path="/home" element={<Home />} />
                     <Route path="/orders" element={<OrderList />} />
+                    <Route path="/orders/create" element={<CreateOrder />} />
                     <Route path="/" element={<Login />} /> {/* Ruta por defecto */}
                 </Routes>
             </Router>

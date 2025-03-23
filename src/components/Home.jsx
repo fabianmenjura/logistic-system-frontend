@@ -1,124 +1,29 @@
-import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useContext } from "react";
+import MainLayout from "./MainLayout";
 import { AuthContext } from "../context/AuthContext";
-import { FaBars, FaBox, FaSignOutAlt } from "react-icons/fa";
 
 const Home = () => {
-  const navigate = useNavigate();
-  const { user, logout } = useContext(AuthContext);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+    const { user } = useContext(AuthContext);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
-  return (
-    <div style={styles.container}>
-      {/* Sidebar con opción de colapsar */}
-      <div style={{ ...styles.sidebar, width: isCollapsed ? "70px" : "260px" }}>
-        <button onClick={() => setIsCollapsed(!isCollapsed)} style={styles.toggleButton}>
-          <FaBars />
-        </button>
-
-        {/* <h2 style={{ ...styles.logo, display: isCollapsed ? "none" : "block" }}>
-          Dashboard
-        </h2> */}
-
-        <ul style={styles.navList}>
-          <li style={styles.navItem} onClick={() => navigate("/orders")}>
-            <FaBox />
-            {!isCollapsed && "Órdenes"}
-          </li>
-          <li style={styles.navItemLogout} onClick={handleLogout}>
-            <FaSignOutAlt />
-            {!isCollapsed && "Cerrar Sesión"}
-          </li>
-        </ul>
-      </div>
-
-      {/* Área de contenido */}
-      <div style={styles.content}>
-        <h1 style={styles.title}>Bienvenido, {user?.username} 👋</h1>
-        <p style={styles.subtitle}>Este es tu dashboard. Aquí puedes gestionar tus órdenes.</p>
-      </div>
-    </div>
-  );
+    return (
+        <MainLayout>
+            <h1 style={styles.title}>Bienvenido, {user?.username} 👋</h1>
+            <p style={styles.subtitle}>Este es tu dashboard. Aquí puedes gestionar tus órdenes.</p>
+        </MainLayout>
+    );
 };
 
-// Estilos mejorados
+// Estilos para el contenido de Home
 const styles = {
-  container: {
-    display: "flex",
-    height: "100vh",
-    backgroundColor: "#f4f4f4",
-  },
-  sidebar: {
-    backgroundColor: "#003c82",
-    color: "#fff",
-    padding: "20px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    alignItems: "center",
-    boxShadow: "4px 0 10px rgba(0, 0, 0, 0.1)",
-    transition: "width 0.3s ease-in-out",
-    overflow: "hidden",
-  },
-  toggleButton: {
-    backgroundColor: "transparent",
-    border: "none",
-    color: "#fff",
-    fontSize: "20px",
-    cursor: "pointer",
-    marginBottom: "20px",
-  },
-  logo: {
-    fontSize: "22px",
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: "30px",
-    transition: "opacity 0.3s ease-in-out",
-  },
-  navList: {
-    listStyle: "none",
-    padding: 0,
-    width: "100%",
-  },
-  navItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    padding: "12px",
-    cursor: "pointer",
-    fontSize: "18px",
-    borderRadius: "5px",
-    transition: "background 0.3s",
-  },
-  navItemLogout: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    padding: "12px",
-    cursor: "pointer",
-    fontSize: "18px",
-    color: "#ff4d4d",
-    borderRadius: "5px",
-    transition: "background 0.3s",
-  },
-  content: {
-    flex: 1,
-    padding: "40px",
-  },
-  title: {
-    fontSize: "28px",
-    fontWeight: "bold",
-    color: "#333",
-  },
-  subtitle: {
-    fontSize: "18px",
-    color: "#666",
-  },
+    title: {
+        fontSize: "28px",
+        fontWeight: "bold",
+        color: "#333",
+    },
+    subtitle: {
+        fontSize: "18px",
+        color: "#666",
+    },
 };
 
 export default Home;
