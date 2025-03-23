@@ -35,7 +35,7 @@ const MainLayout = ({ children }) => {
 
             {/* Área de contenido */}
             <div style={styles.content}>
-                {children} {/* Aquí se renderiza el contenido dinámico */}
+                {children}
             </div>
         </div>
     );

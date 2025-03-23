@@ -81,7 +81,7 @@ const OrderList = () => {
   }
 
   const handleViewOrder = (orderId) => {
-    alert(`Ver detalles de la orden ${orderId}`)
+    navigate(`/orders/${orderId}`);
   }
 
   const handleEditOrder = (orderId) => {
