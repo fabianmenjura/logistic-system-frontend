@@ -22,6 +22,9 @@ const Login = () => {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
+         {/* Imagen corporativa */}
+         <img src="/logo-coordinadora.svg" alt="Logo Corporativo" style={styles.logo} />
+        
         <h2 style={styles.title}>Iniciar Sesión</h2>
         <form onSubmit={handleSubmit} style={styles.form}>
           <input
