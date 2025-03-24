@@ -7,7 +7,8 @@ import Home from './components/Home';
 import OrderList from "./components/orders/OrderList";
 import CreateOrder from "./components/orders/CreateOrder";
 import DetailOrder from "./components/orders/DetailOrder";
-import AssignOrderToRoute from './components/assignOrder/AssignOrderToRoute';
+import ListCarrier from './components/carrier/ListCarrier';
+import DetailCarrier from './components/carrier/DetailCarrier';
 
 const App = () => {
     return (
@@ -20,7 +21,8 @@ const App = () => {
                     <Route path="/orders" element={<OrderList />} />
                     <Route path="/orders/create" element={<CreateOrder />} />
                     <Route path="/orders/:orderId" element={<DetailOrder />} />
-                    <Route path="/assign-order" element={<AssignOrderToRoute />} />
+                    <Route path="/carriers" element={<ListCarrier />} />
+                    <Route path="/carriers/:carrierId" element={<DetailCarrier />} />
                     <Route path="/" element={<Login />} /> {/* Ruta por defecto */}
                 </Routes>
             </Router>

@@ -23,6 +23,16 @@ const OrderList = () => {
   const [assignError, setAssignError] = useState("")
   const [assignSuccess, setAssignSuccess] = useState("")
 
+  // Agregar después de la declaración de estados existentes, antes de useContext
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [dateFilter, setDateFilter] = useState("all")
+  const [packageTypeFilter, setPackageTypeFilter] = useState("all")
+
+  // Agregar después de la declaración de estados de filtros, antes de useContext
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+
   const { user } = useContext(AuthContext)
   const navigate = useNavigate()
 
@@ -47,6 +57,71 @@ const OrderList = () => {
     }
   }, [user])
 
+  // Agregar después de fetchOrders() y antes de getStatusColor()
+  // Modificar la función filteredOrders para incluir la paginación
+  // Reemplazar la constante filteredOrders con esta implementación
+  const filteredOrders = orders.filter((order) => {
+    // Filtro de búsqueda
+    const searchLower = searchTerm.toLowerCase()
+    const matchesSearch =
+      order.id?.toString().includes(searchLower) ||
+      order.tracking_code?.toLowerCase().includes(searchLower) ||
+      order.recipient_name?.toLowerCase().includes(searchLower) ||
+      order.recipient_phone?.toLowerCase().includes(searchLower) ||
+      order.origin_address?.toLowerCase().includes(searchLower) ||
+      order.destination_address?.toLowerCase().includes(searchLower)
+
+    // Filtro de estado
+    const matchesStatus = statusFilter === "all" || order.status?.toLowerCase() === statusFilter.toLowerCase()
+
+    // Filtro de fecha
+    let matchesDate = true
+    const orderDate = new Date(order.created_at)
+    const today = new Date()
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const lastWeek = new Date(today)
+    lastWeek.setDate(lastWeek.getDate() - 7)
+    const lastMonth = new Date(today)
+    lastMonth.setMonth(lastMonth.getMonth() - 1)
+
+    if (dateFilter === "today") {
+      matchesDate = orderDate.toDateString() === today.toDateString()
+    } else if (dateFilter === "yesterday") {
+      matchesDate = orderDate.toDateString() === yesterday.toDateString()
+    } else if (dateFilter === "lastWeek") {
+      matchesDate = orderDate >= lastWeek
+    } else if (dateFilter === "lastMonth") {
+      matchesDate = orderDate >= lastMonth
+    }
+
+    // Filtro de tipo de paquete
+    const matchesPackageType =
+      packageTypeFilter === "all" || order.package_type?.toLowerCase() === packageTypeFilter.toLowerCase()
+
+    return matchesSearch && matchesStatus && matchesDate && matchesPackageType
+  })
+
+  // Calcular el total de páginas y los elementos a mostrar en la página actual
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage)
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentItems = filteredOrders.slice(indexOfFirstItem, indexOfLastItem)
+
+  // Función para cambiar de página
+  const paginate = (pageNumber) => {
+    // Asegurarse de que el número de página esté dentro de los límites
+    if (pageNumber < 1) pageNumber = 1
+    if (pageNumber > totalPages) pageNumber = totalPages
+    setCurrentPage(pageNumber)
+  }
+
+  // Función para cambiar el número de elementos por página
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value))
+    setCurrentPage(1) // Resetear a la primera página cuando cambia el número de elementos por página
+  }
+
   // Función para determinar el color del estado
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -54,7 +129,7 @@ const OrderList = () => {
         return styles.statusDelivered
       case "en tránsito":
         return styles.statusInTransit
-      case "pendiente":
+      case "en espera":
         return styles.statusPending
       case "cancelado":
         return styles.statusCancelled
@@ -208,107 +283,294 @@ const OrderList = () => {
         </div>
       </div>
 
+      {/* Agregar después del div de headerButtons y antes del bloque de loading */}
+      <div style={styles.filtersContainer}>
+        <div style={styles.searchContainer}>
+          <input
+            type="text"
+            placeholder="Buscar por ID, código, destinatario..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={styles.searchInput}
+          />
+        </div>
+        <div style={styles.filtersGroup}>
+          <div style={styles.filterContainer}>
+            <label style={styles.filterLabel}>Estado:</label>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={styles.filterSelect}>
+              <option value="all">Todos</option>
+              <option value="en espera">En espera</option>
+              <option value="en tránsito">En Tránsito</option>
+              <option value="entregado">Entregado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+          <div style={styles.filterContainer}>
+            <label style={styles.filterLabel}>Fecha:</label>
+            <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} style={styles.filterSelect}>
+              <option value="all">Todas</option>
+              <option value="today">Hoy</option>
+              <option value="yesterday">Ayer</option>
+              <option value="lastWeek">Última semana</option>
+              <option value="lastMonth">Último mes</option>
+            </select>
+          </div>
+          <div style={styles.filterContainer}>
+            <label style={styles.filterLabel}>Tipo:</label>
+            <select
+              value={packageTypeFilter}
+              onChange={(e) => setPackageTypeFilter(e.target.value)}
+              style={styles.filterSelect}
+            >
+              <option value="all">Todos</option>
+              <option value="documento">Documento</option>
+              <option value="paquete pequeño">Paquete pequeño</option>
+              <option value="paquete mediano">Paquete mediano</option>
+              <option value="paquete grande">Paquete grande</option>
+              <option value="frágil">Frágil</option>
+            </select>
+          </div>
+          {(searchTerm || statusFilter !== "all" || dateFilter !== "all" || packageTypeFilter !== "all") && (
+            <button
+              onClick={() => {
+                setSearchTerm("")
+                setStatusFilter("all")
+                setDateFilter("all")
+                setPackageTypeFilter("all")
+              }}
+              style={styles.clearFiltersButton}
+            >
+              Limpiar filtros
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Agregar después del div de filtersContainer y antes del bloque de loading */}
       {loading ? (
         <div style={styles.loadingContainer}>
           <div style={styles.loadingSpinner}></div>
           <p style={styles.loadingText}>Cargando órdenes...</p>
         </div>
-      ) : orders.length > 0 ? (
-        <div style={styles.tableContainer}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>ID</th>
-                <th style={styles.th}>Estado</th>
-                <th style={styles.th}>Código</th>
-                <th style={styles.th}>Destino</th>
-                <th style={styles.th}>Origen</th>
-                <th style={styles.th}>Destinatario</th>
-                <th style={styles.th}>Teléfono</th>
-                <th style={styles.th}>Peso</th>
-                <th style={styles.th}>Dimensiones</th>
-                <th style={styles.th}>Tipo</th>
-                <th style={styles.th}>Fecha</th>
-                <th style={styles.th}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order, index) => (
-                <tr key={order.id} style={index % 2 === 0 ? styles.rowEven : styles.rowOdd}>
-                  <td style={styles.td}>{order.id}</td>
-                  <td style={styles.td}>
-                    <span
+      ) : filteredOrders.length > 0 ? (
+        <div>
+          <div style={styles.tableContainer}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>ID</th>
+                  <th style={styles.th}>Estado</th>
+                  <th style={styles.th}>Código</th>
+                  <th style={styles.th}>Destino</th>
+                  <th style={styles.th}>Origen</th>
+                  <th style={styles.th}>Destinatario</th>
+                  {/* <th style={styles.th}>Teléfono</th>
+                  <th style={styles.th}>Peso</th>
+                  <th style={styles.th}>Dimensiones</th> */}
+                  <th style={styles.th}>Tipo</th>
+                  <th style={styles.th}>Fecha</th>
+                  <th style={styles.th}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentItems.map((order, index) => (
+                  <tr key={order.id} style={index % 2 === 0 ? styles.rowEven : styles.rowOdd}>
+                    <td style={styles.td}>{order.id}</td>
+                    <td style={styles.td}>
+                      <span
+                        style={{
+                          ...styles.statusBadge,
+                          ...getStatusColor(order.status),
+                        }}
+                      >
+                        {order.status}
+                      </span>
+                    </td>
+                    <td style={styles.td}>{order.tracking_code}</td>
+                    <td style={styles.td} title={order.destination_address}>
+                      {extractCityAndDepartment(order.destination_address)}
+                    </td>
+                    <td style={styles.td} title={order.origin_address}>
+                      {extractCityAndDepartment(order.origin_address)}
+                    </td>
+                    <td style={styles.td}>{order.recipient_name}</td>
+                    {/* <td style={styles.td}>{order.recipient_phone}</td>
+                    <td style={styles.td}>{order.package_weight} kg</td>
+                    <td style={styles.td}>{order.package_dimensions}</td> */}
+                    <td style={styles.td}>{order.package_type}</td>
+                    <td style={styles.td}>{new Date(order.created_at).toLocaleDateString()}</td>
+                    <td style={styles.actionsTd}>
+                      <div style={styles.actionsContainer}>
+                        <button
+                          onClick={() => handleViewOrder(order.id)}
+                          style={styles.actionButton}
+                          title="Ver detalles"
+                        >
+                          <span style={styles.viewIcon}>👁️</span>
+                        </button>
+                        <button
+                          onClick={() => handleEditOrder(order.id)}
+                          style={styles.actionButton}
+                          title="Editar orden"
+                        >
+                          <span style={styles.editIcon}>✏️</span>
+                        </button>
+                        {order.status?.toLowerCase() == "en espera" && (
+                          <button
+                            onClick={() => handleOpenAssignModal(order)}
+                            style={styles.actionButton}
+                            title="Asignar ruta"
+                          >
+                            <span style={styles.assignIcon}>🚚</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteOrder(order.id)}
+                          style={{ ...styles.actionButton, ...styles.deleteButton }}
+                          title="Eliminar orden"
+                        >
+                          <span style={styles.deleteIcon}>🗑️</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Paginador */}
+          <div style={styles.paginationContainer}>
+            <div style={styles.paginationInfo}>
+              <span>
+                Mostrando {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredOrders.length)} de{" "}
+                {filteredOrders.length} órdenes
+              </span>
+              <div style={styles.itemsPerPageContainer}>
+                <label style={styles.itemsPerPageLabel}>Mostrar:</label>
+                <select value={itemsPerPage} onChange={handleItemsPerPageChange} style={styles.itemsPerPageSelect}>
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={styles.paginationControls}>
+              <button
+                onClick={() => paginate(1)}
+                disabled={currentPage === 1}
+                style={{
+                  ...styles.paginationButton,
+                  ...(currentPage === 1 ? styles.paginationButtonDisabled : {}),
+                }}
+                title="Primera página"
+              >
+                &laquo;
+              </button>
+              <button
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+                style={{
+                  ...styles.paginationButton,
+                  ...(currentPage === 1 ? styles.paginationButtonDisabled : {}),
+                }}
+                title="Página anterior"
+              >
+                &lsaquo;
+              </button>
+
+              <div style={styles.paginationPages}>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  // Mostrar 5 páginas centradas en la página actual cuando sea posible
+                  let pageNum
+                  if (totalPages <= 5) {
+                    // Si hay 5 o menos páginas, mostrar todas
+                    pageNum = i + 1
+                  } else if (currentPage <= 3) {
+                    // Si estamos en las primeras 3 páginas, mostrar 1-5
+                    pageNum = i + 1
+                  } else if (currentPage >= totalPages - 2) {
+                    // Si estamos en las últimas 3 páginas, mostrar las últimas 5
+                    pageNum = totalPages - 4 + i
+                  } else {
+                    // En otro caso, mostrar 2 antes y 2 después de la página actual
+                    pageNum = currentPage - 2 + i
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => paginate(pageNum)}
                       style={{
-                        ...styles.statusBadge,
-                        ...getStatusColor(order.status),
+                        ...styles.paginationButton,
+                        ...(currentPage === pageNum ? styles.paginationButtonActive : {}),
                       }}
                     >
-                      {order.status}
-                    </span>
-                  </td>
-                  <td style={styles.td}>{order.tracking_code}</td>
-                  <td style={styles.td} title={order.destination_address}>
-                    {extractCityAndDepartment(order.destination_address)}
-                  </td>
-                  <td style={styles.td} title={order.origin_address}>
-                    {extractCityAndDepartment(order.origin_address)}
-                  </td>
-                  <td style={styles.td}>{order.recipient_name}</td>
-                  <td style={styles.td}>{order.recipient_phone}</td>
-                  <td style={styles.td}>{order.package_weight} kg</td>
-                  <td style={styles.td}>{order.package_dimensions}</td>
-                  <td style={styles.td}>{order.package_type}</td>
-                  <td style={styles.td}>{new Date(order.created_at).toLocaleDateString()}</td>
-                  <td style={styles.actionsTd}>
-                    <div style={styles.actionsContainer}>
-                      <button
-                        onClick={() => handleViewOrder(order.id)}
-                        style={styles.actionButton}
-                        title="Ver detalles"
-                      >
-                        <span style={styles.viewIcon}>👁️</span>
-                      </button>
-                      <button
-                        onClick={() => handleEditOrder(order.id)}
-                        style={styles.actionButton}
-                        title="Editar orden"
-                      >
-                        <span style={styles.editIcon}>✏️</span>
-                      </button>
-                      {order.status?.toLowerCase() !== "en tránsito" && (
-                        <button
-                          onClick={() => handleOpenAssignModal(order)}
-                          style={styles.actionButton}
-                          title="Asignar ruta"
-                        >
-                          <span style={styles.assignIcon}>🚚</span>
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDeleteOrder(order.id)}
-                        style={{ ...styles.actionButton, ...styles.deleteButton }}
-                        title="Eliminar orden"
-                      >
-                        <span style={styles.deleteIcon}>🗑️</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      {pageNum}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <button
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                style={{
+                  ...styles.paginationButton,
+                  ...(currentPage === totalPages ? styles.paginationButtonDisabled : {}),
+                }}
+                title="Página siguiente"
+              >
+                &rsaquo;
+              </button>
+              <button
+                onClick={() => paginate(totalPages)}
+                disabled={currentPage === totalPages}
+                style={{
+                  ...styles.paginationButton,
+                  ...(currentPage === totalPages ? styles.paginationButtonDisabled : {}),
+                }}
+                title="Última página"
+              >
+                &raquo;
+              </button>
+            </div>
+          </div>
         </div>
       ) : (
         <div style={styles.emptyState}>
           <div style={styles.emptyIcon}>📦</div>
-          <p style={styles.emptyText}>No hay órdenes disponibles.</p>
+          <p style={styles.emptyText}>
+            {searchTerm || statusFilter !== "all" || dateFilter !== "all" || packageTypeFilter !== "all"
+              ? "No se encontraron órdenes con los filtros aplicados."
+              : "No hay órdenes disponibles."}
+          </p>
           <div style={styles.emptyActions}>
             <button onClick={handleCreateOrder} style={styles.createEmptyButton}>
-              Crear primera orden
+              {searchTerm || statusFilter !== "all" || dateFilter !== "all" || packageTypeFilter !== "all"
+                ? "Crear nueva orden"
+                : "Crear primera orden"}
             </button>
-            <button onClick={fetchOrders} style={styles.retryButton}>
-              Actualizar
-            </button>
+            {searchTerm || statusFilter !== "all" || dateFilter !== "all" || packageTypeFilter !== "all" ? (
+              <button
+                onClick={() => {
+                  setSearchTerm("")
+                  setStatusFilter("all")
+                  setDateFilter("all")
+                  setPackageTypeFilter("all")
+                }}
+                style={styles.clearFiltersButton}
+              >
+                Limpiar filtros
+              </button>
+            ) : (
+              <button onClick={fetchOrders} style={styles.retryButton}>
+                Actualizar
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -755,6 +1017,134 @@ const styles = {
   "@keyframes spin": {
     "0%": { transform: "rotate(0deg)" },
     "100%": { transform: "rotate(360deg)" },
+  },
+  filtersContainer: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: "20px",
+    flexWrap: "wrap",
+    gap: "16px",
+  },
+  searchContainer: {
+    flex: "1",
+    minWidth: "250px",
+  },
+  searchInput: {
+    width: "90%",
+    padding: "10px 16px",
+    fontSize: "14px",
+    border: "1px solid #ddd",
+    borderRadius: "4px",
+    outline: "none",
+  },
+  filtersGroup: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "12px",
+    alignItems: "flex-start",
+  },
+  filterContainer: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  },
+  filterLabel: {
+    fontSize: "14px",
+    fontWeight: "bold",
+    color: "#333",
+    whiteSpace: "nowrap",
+  },
+  filterSelect: {
+    padding: "10px 16px",
+    fontSize: "14px",
+    border: "1px solid #ddd",
+    borderRadius: "4px",
+    outline: "none",
+    backgroundColor: "white",
+  },
+  clearFiltersButton: {
+    backgroundColor: "#003c82",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    padding: "10px 16px",
+    fontSize: "14px",
+    cursor: "pointer",
+    fontWeight: "bold",
+    transition: "background-color 0.2s",
+    whiteSpace: "nowrap",
+  },
+  paginationContainer: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "16px",
+    backgroundColor: "white",
+    borderTop: "1px solid #eaeaea",
+    borderBottomLeftRadius: "8px",
+    borderBottomRightRadius: "8px",
+    flexWrap: "wrap",
+    gap: "16px",
+  },
+  paginationInfo: {
+    display: "flex",
+    alignItems: "center",
+    gap: "16px",
+    color: "#666",
+    fontSize: "14px",
+    flexWrap: "wrap",
+  },
+  itemsPerPageContainer: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  },
+  itemsPerPageLabel: {
+    fontSize: "14px",
+    color: "#666",
+  },
+  itemsPerPageSelect: {
+    padding: "6px 8px",
+    borderRadius: "4px",
+    border: "1px solid #ddd",
+    fontSize: "14px",
+    backgroundColor: "white",
+  },
+  paginationControls: {
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+  },
+  paginationButton: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: "36px",
+    height: "36px",
+    padding: "0 8px",
+    backgroundColor: "white",
+    border: "1px solid #ddd",
+    borderRadius: "4px",
+    color: "#333",
+    fontSize: "14px",
+    cursor: "pointer",
+    transition: "all 0.2s",
+  },
+  paginationButtonActive: {
+    backgroundColor: "#003c82",
+    color: "white",
+    borderColor: "#003c82",
+  },
+  paginationButtonDisabled: {
+    backgroundColor: "#f5f5f5",
+    color: "#ccc",
+    cursor: "not-allowed",
+  },
+  paginationPages: {
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
   },
 }
 
