@@ -9,6 +9,20 @@ import { AuthContext } from "../../context/AuthContext"
 const OrderList = () => {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
+  const [routes, setRoutes] = useState([])
+  const [carriers, setCarriers] = useState([])
+  const [loadingRoutes, setLoadingRoutes] = useState(false)
+  const [loadingCarriers, setLoadingCarriers] = useState(false)
+  const [assignModalOpen, setAssignModalOpen] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState(null)
+  const [assignmentData, setAssignmentData] = useState({
+    routeId: "",
+    carrierId: "",
+  })
+  const [assignLoading, setAssignLoading] = useState(false)
+  const [assignError, setAssignError] = useState("")
+  const [assignSuccess, setAssignSuccess] = useState("")
+
   const { user } = useContext(AuthContext)
   const navigate = useNavigate()
 
@@ -81,7 +95,7 @@ const OrderList = () => {
   }
 
   const handleViewOrder = (orderId) => {
-    navigate(`/orders/${orderId}`);
+    navigate(`/orders/${orderId}`)
   }
 
   const handleEditOrder = (orderId) => {
@@ -90,6 +104,94 @@ const OrderList = () => {
 
   const handleDeleteOrder = (orderId) => {
     alert(`Eliminar orden ${orderId}`)
+  }
+
+  // Funciones para manejar la asignación de ruta
+  const handleOpenAssignModal = async (order) => {
+    setSelectedOrder(order)
+    setAssignmentData({
+      routeId: "",
+      carrierId: "",
+    })
+    setAssignError("")
+    setAssignSuccess("")
+
+    // Cargar rutas y transportistas
+    await fetchRoutes()
+    await fetchCarriers()
+
+    setAssignModalOpen(true)
+  }
+
+  const handleCloseAssignModal = () => {
+    setAssignModalOpen(false)
+    setSelectedOrder(null)
+  }
+
+  const fetchRoutes = async () => {
+    setLoadingRoutes(true)
+    try {
+      const response = await api.get("/api/list-routes")
+      setRoutes(response.data.routes || [])
+    } catch (error) {
+      console.error("Error al obtener las rutas:", error)
+      setAssignError("No se pudieron cargar las rutas disponibles.")
+    } finally {
+      setLoadingRoutes(false)
+    }
+  }
+
+  const fetchCarriers = async () => {
+    setLoadingCarriers(true)
+    try {
+      const response = await api.get("/api/list-carriers")
+      setCarriers(response.data.carriers || [])
+    } catch (error) {
+      console.error("Error al obtener los transportistas:", error)
+      setAssignError("No se pudieron cargar los transportistas disponibles.")
+    } finally {
+      setLoadingCarriers(false)
+    }
+  }
+
+  const handleAssignmentChange = (e) => {
+    const { name, value } = e.target
+    setAssignmentData({
+      ...assignmentData,
+      [name]: value,
+    })
+  }
+
+  const handleAssignOrder = async () => {
+    if (!assignmentData.routeId || !assignmentData.carrierId) {
+      setAssignError("Por favor, seleccione una ruta y un transportista.")
+      return
+    }
+
+    setAssignLoading(true)
+    setAssignError("")
+    setAssignSuccess("")
+
+    try {
+      const response = await api.post("/api/assign-manually", {
+        orderId: selectedOrder.id,
+        routeId: Number.parseInt(assignmentData.routeId),
+        carrierId: Number.parseInt(assignmentData.carrierId),
+      })
+
+      setAssignSuccess("Orden asignada exitosamente.")
+
+      // Actualizar la lista de órdenes después de asignar
+      setTimeout(() => {
+        fetchOrders()
+        handleCloseAssignModal()
+      }, 1500)
+    } catch (error) {
+      console.error("Error al asignar la orden:", error)
+      setAssignError(error.response?.data?.message || "Error al asignar la orden.")
+    } finally {
+      setAssignLoading(false)
+    }
   }
 
   return (
@@ -173,6 +275,15 @@ const OrderList = () => {
                       >
                         <span style={styles.editIcon}>✏️</span>
                       </button>
+                      {order.status?.toLowerCase() !== "en tránsito" && (
+                        <button
+                          onClick={() => handleOpenAssignModal(order)}
+                          style={styles.actionButton}
+                          title="Asignar ruta"
+                        >
+                          <span style={styles.assignIcon}>🚚</span>
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDeleteOrder(order.id)}
                         style={{ ...styles.actionButton, ...styles.deleteButton }}
@@ -198,6 +309,99 @@ const OrderList = () => {
             <button onClick={fetchOrders} style={styles.retryButton}>
               Actualizar
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para asignar ruta y transportista */}
+      {assignModalOpen && selectedOrder && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <div style={styles.modalHeader}>
+              <h3 style={styles.modalTitle}>Asignar Ruta y Transportista</h3>
+              <button onClick={handleCloseAssignModal} style={styles.modalCloseButton}>
+                ✕
+              </button>
+            </div>
+
+            <div style={styles.modalBody}>
+              <div style={styles.orderInfo}>
+                <p style={styles.orderInfoText}>
+                  <strong>Orden:</strong> #{selectedOrder.id}
+                </p>
+                <p style={styles.orderInfoText}>
+                  <strong>Origen:</strong> {extractCityAndDepartment(selectedOrder.origin_address)}
+                </p>
+                <p style={styles.orderInfoText}>
+                  <strong>Destino:</strong> {extractCityAndDepartment(selectedOrder.destination_address)}
+                </p>
+                <p style={styles.orderInfoText}>
+                  <strong>Peso:</strong> {selectedOrder.package_weight} kg
+                </p>
+              </div>
+
+              {(loadingRoutes || loadingCarriers) && (
+                <div style={styles.modalLoading}>
+                  <div style={styles.loadingSpinner}></div>
+                  <p>Cargando datos...</p>
+                </div>
+              )}
+
+              {!loadingRoutes && !loadingCarriers && (
+                <div style={styles.formContainer}>
+                  <div style={styles.formGroup}>
+                    <label style={styles.formLabel}>Seleccionar Ruta:</label>
+                    <select
+                      name="routeId"
+                      value={assignmentData.routeId}
+                      onChange={handleAssignmentChange}
+                      style={styles.formSelect}
+                    >
+                      <option value="">Seleccione una ruta</option>
+                      {routes.map((route) => (
+                        <option key={route.id} value={route.id}>
+                          {route.name || `${route.origin} → ${route.destination}`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={styles.formGroup}>
+                    <label style={styles.formLabel}>Seleccionar Transportista:</label>
+                    <select
+                      name="carrierId"
+                      value={assignmentData.carrierId}
+                      onChange={handleAssignmentChange}
+                      style={styles.formSelect}
+                    >
+                      <option value="">Seleccione un transportista</option>
+                      {carriers.map((carrier) => (
+                        <option key={carrier.id} value={carrier.id}>
+                          {carrier.name} - {carrier.vehicle_type} ({carrier.capacity} kg)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {assignError && <div style={styles.errorMessage}>{assignError}</div>}
+
+                  {assignSuccess && <div style={styles.successMessage}>{assignSuccess}</div>}
+                </div>
+              )}
+            </div>
+
+            <div style={styles.modalFooter}>
+              <button onClick={handleCloseAssignModal} style={styles.cancelButton} disabled={assignLoading}>
+                Cancelar
+              </button>
+              <button
+                onClick={handleAssignOrder}
+                style={styles.assignButton}
+                disabled={assignLoading || !assignmentData.routeId || !assignmentData.carrierId}
+              >
+                {assignLoading ? "Asignando..." : "Asignar"}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -329,6 +533,9 @@ const styles = {
   editIcon: {
     fontSize: "16px",
   },
+  assignIcon: {
+    fontSize: "16px",
+  },
   deleteIcon: {
     fontSize: "16px",
   },
@@ -411,6 +618,139 @@ const styles = {
     cursor: "pointer",
     fontWeight: "bold",
     transition: "background-color 0.2s",
+  },
+  // Estilos para el modal
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: "8px",
+    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
+    width: "90%",
+    maxWidth: "500px",
+    maxHeight: "90vh",
+    overflow: "auto",
+    display: "flex",
+    flexDirection: "column",
+  },
+  modalHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "16px 20px",
+    borderBottom: "1px solid #eaeaea",
+    backgroundColor: "#f8fafc",
+  },
+  modalTitle: {
+    fontSize: "18px",
+    fontWeight: "bold",
+    color: "#003c82",
+    margin: 0,
+  },
+  modalCloseButton: {
+    backgroundColor: "transparent",
+    border: "none",
+    fontSize: "18px",
+    cursor: "pointer",
+    color: "#666",
+  },
+  modalBody: {
+    padding: "20px",
+    flexGrow: 1,
+    overflowY: "auto",
+  },
+  modalFooter: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "12px",
+    padding: "16px 20px",
+    borderTop: "1px solid #eaeaea",
+    backgroundColor: "#f8fafc",
+  },
+  orderInfo: {
+    backgroundColor: "#f0f4f8",
+    padding: "12px 16px",
+    borderRadius: "6px",
+    marginBottom: "20px",
+  },
+  orderInfoText: {
+    margin: "6px 0",
+    fontSize: "14px",
+    color: "#333",
+  },
+  formContainer: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
+  },
+  formGroup: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  },
+  formLabel: {
+    fontSize: "14px",
+    fontWeight: "bold",
+    color: "#333",
+  },
+  formSelect: {
+    padding: "10px 12px",
+    borderRadius: "4px",
+    border: "1px solid #ccc",
+    fontSize: "14px",
+    backgroundColor: "#fff",
+  },
+  cancelButton: {
+    backgroundColor: "#f5f5f5",
+    color: "#333",
+    border: "1px solid #ddd",
+    borderRadius: "4px",
+    padding: "10px 16px",
+    fontSize: "14px",
+    cursor: "pointer",
+    fontWeight: "bold",
+  },
+  assignButton: {
+    backgroundColor: "#003c82",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    padding: "10px 16px",
+    fontSize: "14px",
+    cursor: "pointer",
+    fontWeight: "bold",
+    transition: "background-color 0.2s",
+  },
+  modalLoading: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "30px 0",
+  },
+  errorMessage: {
+    backgroundColor: "#ffe6e6",
+    color: "#b30000",
+    padding: "10px 12px",
+    borderRadius: "4px",
+    fontSize: "14px",
+  },
+  successMessage: {
+    backgroundColor: "#e6f7ee",
+    color: "#0d6832",
+    padding: "10px 12px",
+    borderRadius: "4px",
+    fontSize: "14px",
   },
   "@keyframes spin": {
     "0%": { transform: "rotate(0deg)" },
