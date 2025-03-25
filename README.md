@@ -1,3 +1,46 @@
+# Frontend Logístico - Reto Coordinadora
+
+Este es el frontend desarrollado en **React** para el sistema de gestión de envíos y optimización de rutas. Permite a los clientes rastrear sus pedidos en tiempo real y gestionar envíos de manera eficiente.
+
+## Tecnologías utilizadas
+
+- **React** para la interfaz de usuario
+- **Axios** para consumo de API
+
+## Instalación y configuración
+
+### 1. Clonar el repositorio
+```sh
+git clone https://github.com/fabianmenjura/logistic-system-frontend.git
+cd logistic-system-frontend
+```
+
+### 2. Instalar dependencias
+```sh
+npm install
+```
+
+### 3. Configurar variables de entorno
+Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
+```
+PORT=3001
+REACT_APP_API_URL=http://localhost:3000
+```
+
+### 4. Ejecutar la aplicación
+- **Modo desarrollo:**
+  ```sh
+  npm start
+  ```
+
+## Funcionalidades principales
+
+- **Inicio de sesión y autenticación**
+- **Dashboard con listado de envíos**
+- **Formulario para crear nuevos envíos**
+- **Seguimiento en tiempo real de pedidos**
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
