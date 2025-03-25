@@ -43,8 +43,14 @@ const OrderDetail = () => {
         fetchCarrierDetails(response.data.order.carrier_id);
       }
     } catch (error) {
-      console.error("Error al obtener los detalles de la orden:", error);
-      alert("No se pudieron cargar los detalles de la orden.");
+      console.error("Error al obtener las órdenes:", error)
+      if (error.response?.status === 401 &&
+        error.response?.data?.message === "Token inválido o expirado") {
+        alert("Su sesión ha expirado. Por favor, inicie sesión nuevamente.")
+        navigate("/login")
+      } else{
+      alert("No se pudieron cargar las órdenes.")
+      }
     } finally {
       setLoading(false);
     }

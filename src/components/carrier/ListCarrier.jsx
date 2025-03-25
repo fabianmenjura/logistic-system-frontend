@@ -27,8 +27,14 @@ const CarrierList = () => {
       const response = await api.get("/api/list-carriers")
       setCarriers(response.data.carriers)
     } catch (error) {
-      console.error("Error al obtener los transportistas:", error)
-      alert("No se pudieron cargar los transportistas.")
+      console.error("Error al obtener las transportistas:", error)
+      if (error.response?.status === 401 &&
+        error.response?.data?.message === "Token inválido o expirado") {
+        alert("Su sesión ha expirado. Por favor, inicie sesión nuevamente.")
+        navigate("/login")
+      } else{
+      alert("No se pudieron cargar las transportistas.")
+      }
     } finally {
       setLoading(false)
     }
