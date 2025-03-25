@@ -44,7 +44,13 @@ const OrderList = () => {
       setOrders(response.data.orders)
     } catch (error) {
       console.error("Error al obtener las órdenes:", error)
+      if (error.response?.status === 401 &&
+        error.response?.data?.message === "Token inválido o expirado") {
+        alert("Su sesión ha expirado. Por favor, inicie sesión nuevamente.")
+        navigate("/login")
+      } else{
       alert("No se pudieron cargar las órdenes.")
+      }
     } finally {
       setLoading(false)
     }

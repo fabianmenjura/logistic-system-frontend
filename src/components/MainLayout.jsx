@@ -22,7 +22,11 @@ const MainLayout = ({ children }) => {
                 </button>
 
                 <ul style={styles.navList}>
-                <li style={styles.navItem} onClick={() => navigate("/carriers")}>
+                    <li style={styles.navItem} onClick={() => navigate("/orders/history")}>
+                        <FaBox />
+                        {!isCollapsed && "Mis envíos"}
+                    </li>
+                    <li style={styles.navItem} onClick={() => navigate("/carriers")}>
                         <FaBox />
                         {!isCollapsed && "Transportistas"}
                     </li>
