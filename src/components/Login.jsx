@@ -1,7 +1,8 @@
-import React, { useState, useContext } from "react";
+"use client";
+
+import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import api from "../utils/Api";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -23,26 +24,52 @@ const Login = () => {
     <div style={styles.container}>
       <div style={styles.card}>
          {/* Imagen corporativa */}
-         <img src="/logo-coordinadora.svg" alt="Logo Corporativo" style={styles.logo} />
-        
+         <img src="/logo-coordinadora.svg" alt="Logo Corporativo"/>
         <h2 style={styles.title}>Iniciar Sesión</h2>
+        <p style={styles.subtitle}>Ingrese sus credenciales para continuar</p>
+
         <form onSubmit={handleSubmit} style={styles.form}>
-          <input
-            type="text"
-            placeholder="Usuario"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={styles.input}
-          />
-          <input
-            type="password"
-            placeholder="Contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={styles.input}
-          />
-          <button type="submit" style={styles.button}>Iniciar Sesión</button>
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Usuario</label>
+            <input
+              type="text"
+              placeholder="Ingrese su nombre de usuario"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              style={styles.input}
+            />
+          </div>
+
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Contraseña</label>
+            <input
+              type="password"
+              placeholder="Ingrese su contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={styles.input}
+            />
+          </div>
+
+          {/* <div style={styles.forgotPassword}>
+            <a href="#" style={styles.link}>
+              ¿Olvidó su contraseña?
+            </a>
+          </div> */}
+
+          <button type="submit" style={styles.button}>
+            Iniciar Sesión
+          </button>
         </form>
+
+        <div style={styles.footer}>
+          <p>
+            ¿No tiene una cuenta?{" "}
+            <a href="/register" style={styles.link}>
+              Regístrese
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -52,49 +79,83 @@ const Login = () => {
 const styles = {
   container: {
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
     height: "100vh",
-    backgroundColor: "#E3E3E3",
+    backgroundColor: "#f5f8fa",
+    fontFamily: "Arial, sans-serif",
   },
   card: {
-    backgroundColor: "#fff",
+    width: "380px",
     padding: "30px",
-    borderRadius: "10px",
-    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+    backgroundColor: "#ffffff",
+    borderRadius: "12px",
+    boxShadow: "0 10px 25px rgba(0, 60, 130, 0.1)",
     textAlign: "center",
-    width: "350px",
   },
   title: {
+    color: "#333333",
     fontSize: "24px",
-    marginBottom: "20px",
-    color: "#333",
+    fontWeight: "bold",
+    margin: "0 0 10px 0",
+  },
+  subtitle: {
+    color: "#666666",
+    fontSize: "14px",
+    marginBottom: "25px",
   },
   form: {
     display: "flex",
     flexDirection: "column",
+    width: "100%",
+  },
+  inputGroup: {
+    marginBottom: "20px",
+    textAlign: "left",
+  },
+  label: {
+    display: "block",
+    marginBottom: "6px",
+    fontSize: "14px",
+    fontWeight: "bold",
+    color: "#555555",
   },
   input: {
-    marginBottom: "15px",
-    padding: "12px",
-    fontSize: "16px",
-    borderRadius: "5px",
-    border: "1px solid #ccc",
+    width: "100%",
+    padding: "12px 15px",
+    fontSize: "14px",
+    border: "1px solid #e1e5e9",
+    borderRadius: "6px",
+    boxSizing: "border-box",
+    transition: "border-color 0.3s, box-shadow 0.3s",
     outline: "none",
-    transition: "border 0.3s",
+  },
+  forgotPassword: {
+    textAlign: "right",
+    marginBottom: "20px",
   },
   button: {
-    padding: "12px",
+    padding: "14px",
     fontSize: "16px",
+    fontWeight: "bold",
     backgroundColor: "#003c82",
     color: "#fff",
     border: "none",
-    borderRadius: "5px",
+    borderRadius: "6px",
     cursor: "pointer",
-    transition: "background 0.3s",
+    transition: "background-color 0.3s",
+    boxShadow: "0 4px 6px rgba(0, 60, 130, 0.2)",
   },
-  buttonHover: {
-    backgroundColor: "#003c82",
+  footer: {
+    marginTop: "25px",
+    fontSize: "14px",
+    color: "#666666",
+  },
+  link: {
+    color: "#003c82",
+    textDecoration: "none",
+    fontWeight: "bold",
   },
 };
 
