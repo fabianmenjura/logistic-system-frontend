@@ -278,10 +278,10 @@ const CarrierDetail = () => {
                 <span style={styles.infoLabel}>Órdenes activas:</span>
                 <span style={styles.infoValue}>{carrier.active_orders || 0}</span>
               </div> */}
-              <div style={styles.infoItem}>
+              {/* <div style={styles.infoItem}>
                 <span style={styles.infoLabel}>Órdenes completadas:</span>
                 <span style={styles.infoValue}>{carrier.completed_orders || 0}</span>
-              </div>
+              </div> */}
               <div style={styles.infoItem}>
                 <span style={styles.infoLabel}>Distancia recorrida:</span>
                 <span style={styles.infoValue}>{carrier.total_distance || 0} km</span>

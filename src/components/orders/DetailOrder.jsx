@@ -1,212 +1,213 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useContext } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import api from "../../utils/Api"
-import MainLayout from "../MainLayout"
-import { AuthContext } from "../../context/AuthContext"
+import { useState, useEffect, useContext } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import api from "../../utils/Api";
+import MainLayout from "../MainLayout";
+import { AuthContext } from "../../context/AuthContext";
 
 const OrderDetail = () => {
-  const { orderId } = useParams() // Obtener el ID de la orden desde la URL
-  const navigate = useNavigate()
-  const { user } = useContext(AuthContext)
-  const [order, setOrder] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [routes, setRoutes] = useState([])
-  const [carriers, setCarriers] = useState([])
-  const [assignModalOpen, setAssignModalOpen] = useState(false)
+  const { orderId } = useParams(); // Obtener el ID de la orden desde la URL
+  const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [routes, setRoutes] = useState([]);
+  const [carriers, setCarriers] = useState([]);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [assignmentData, setAssignmentData] = useState({
     routeId: "",
     carrierId: "",
-  })
-  const [loadingRoutes, setLoadingRoutes] = useState(false)
-  const [loadingCarriers, setLoadingCarriers] = useState(false)
-  const [assignLoading, setAssignLoading] = useState(false)
-  const [assignError, setAssignError] = useState("")
-  const [assignSuccess, setAssignSuccess] = useState("")
-  const [routeDetails, setRouteDetails] = useState(null)
-  const [carrierDetails, setCarrierDetails] = useState(null)
+  });
+  const [loadingRoutes, setLoadingRoutes] = useState(false);
+  const [loadingCarriers, setLoadingCarriers] = useState(false);
+  const [assignLoading, setAssignLoading] = useState(false);
+  const [assignError, setAssignError] = useState("");
+  const [assignSuccess, setAssignSuccess] = useState("");
+  const [routeDetails, setRouteDetails] = useState(null);
+  const [carrierDetails, setCarrierDetails] = useState(null);
 
   // Función para obtener los detalles de la orden
   const fetchOrderDetails = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const response = await api.get(`/api/orders/${orderId}`)
-      setOrder(response.data.order)
+      const response = await api.get(`/api/orders/${orderId}`);
+      setOrder(response.data.order);
 
       // Si la orden tiene ruta y transportista asignados, obtener sus detalles
       if (response.data.order.route_id) {
-        fetchRouteDetails(response.data.order.route_id)
+        fetchRouteDetails(response.data.order.route_id);
       }
 
       if (response.data.order.carrier_id) {
-        fetchCarrierDetails(response.data.order.carrier_id)
+        fetchCarrierDetails(response.data.order.carrier_id);
       }
     } catch (error) {
-      console.error("Error al obtener los detalles de la orden:", error)
-      alert("No se pudieron cargar los detalles de la orden.")
+      console.error("Error al obtener los detalles de la orden:", error);
+      alert("No se pudieron cargar los detalles de la orden.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Función para obtener detalles de la ruta
   const fetchRouteDetails = async (routeId) => {
     try {
-      
-      const response = await api.get(`/api/list-routes/${routeId}`)
-      console.log(response.data.route)
-      setRouteDetails(response.data.route)
+      const response = await api.get(`/api/list-routes/${routeId}`);
+      console.log(response.data.route);
+      setRouteDetails(response.data.route);
     } catch (error) {
-      console.error("Error al obtener detalles de la ruta:", error)
+      console.error("Error al obtener detalles de la ruta:", error);
     }
-  }
+  };
 
   // Función para obtener detalles del transportista
   const fetchCarrierDetails = async (carrierId) => {
     try {
-      
-      const response = await api.get(`/api/list-carriers/${carrierId}`)
-      setCarrierDetails(response.data.carrier)
+      const response = await api.get(`/api/list-carriers/${carrierId}`);
+      setCarrierDetails(response.data.carrier);
     } catch (error) {
-      console.error("Error al obtener detalles del transportista:", error)
+      console.error("Error al obtener detalles del transportista:", error);
     }
-  }
+  };
 
   // Cargar los detalles de la orden al montar el componente
   useEffect(() => {
     if (user) {
-      fetchOrderDetails()
+      fetchOrderDetails();
     }
-  }, [user, orderId])
+  }, [user, orderId]);
 
   // Función para determinar el color del estado
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case "entregado":
-        return styles.statusDelivered
+        return styles.statusDelivered;
       case "en tránsito":
-        return styles.statusInTransit
+        return styles.statusInTransit;
       case "pendiente":
-        return styles.statusPending
+        return styles.statusPending;
       case "cancelado":
-        return styles.statusCancelled
+        return styles.statusCancelled;
       default:
-        return styles.statusDefault
+        return styles.statusDefault;
     }
-  }
+  };
 
   // Función para extraer ciudad y departamento de una dirección completa
   const extractCityAndDepartment = (fullAddress) => {
-    if (!fullAddress) return "No disponible"
+    if (!fullAddress) return "No disponible";
 
     // La dirección tiene formato: "Calle, número, Ciudad, Departamento, Colombia"
-    const parts = fullAddress.split(",").map((part) => part.trim())
+    const parts = fullAddress.split(",").map((part) => part.trim());
 
     // Si hay al menos 3 partes (dirección, ciudad, departamento, [país])
     if (parts.length >= 3) {
       // Extraer ciudad y departamento (normalmente los dos últimos antes de "Colombia")
-      const departmentIndex = parts.findIndex((part) => part.toLowerCase() === "colombia") - 1
-      const cityIndex = departmentIndex - 1
+      const departmentIndex =
+        parts.findIndex((part) => part.toLowerCase() === "colombia") - 1;
+      const cityIndex = departmentIndex - 1;
 
       if (departmentIndex > 0 && cityIndex >= 0) {
-        return `${parts[cityIndex]}, ${parts[departmentIndex]}`
+        return `${parts[cityIndex]}, ${parts[departmentIndex]}`;
       }
 
       // Si no encontramos "Colombia", asumimos que los dos últimos son ciudad y departamento
       if (parts.length >= 2) {
-        return `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`
+        return `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`;
       }
     }
 
-    return fullAddress // Devolver la dirección completa si no podemos extraer
-  }
+    return fullAddress; // Devolver la dirección completa si no podemos extraer
+  };
 
   // Funciones para manejar la asignación de ruta
   const handleOpenAssignModal = async () => {
     setAssignmentData({
       routeId: "",
       carrierId: "",
-    })
-    setAssignError("")
-    setAssignSuccess("")
+    });
+    setAssignError("");
+    setAssignSuccess("");
 
     // Cargar rutas y transportistas
-    await fetchRoutes()
-    await fetchCarriers()
+    await fetchRoutes();
+    await fetchCarriers();
 
-    setAssignModalOpen(true)
-  }
+    setAssignModalOpen(true);
+  };
 
   const handleCloseAssignModal = () => {
-    setAssignModalOpen(false)
-  }
+    setAssignModalOpen(false);
+  };
 
   const fetchRoutes = async () => {
-    setLoadingRoutes(true)
+    setLoadingRoutes(true);
     try {
-      const response = await api.get("/api/list-routes")
-      setRoutes(response.data.routes || [])
+      const response = await api.get("/api/list-routes");
+      setRoutes(response.data.routes || []);
     } catch (error) {
-      console.error("Error al obtener las rutas:", error)
-      setAssignError("No se pudieron cargar las rutas disponibles.")
+      console.error("Error al obtener las rutas:", error);
+      setAssignError("No se pudieron cargar las rutas disponibles.");
     } finally {
-      setLoadingRoutes(false)
+      setLoadingRoutes(false);
     }
-  }
+  };
 
   const fetchCarriers = async () => {
-    setLoadingCarriers(true)
+    setLoadingCarriers(true);
     try {
-      const response = await api.get("/api/list-carriers")
-      setCarriers(response.data.carriers || [])
+      const response = await api.get("/api/list-carriers");
+      setCarriers(response.data.carriers || []);
     } catch (error) {
-      console.error("Error al obtener los transportistas:", error)
-      setAssignError("No se pudieron cargar los transportistas disponibles.")
+      console.error("Error al obtener los transportistas:", error);
+      setAssignError("No se pudieron cargar los transportistas disponibles.");
     } finally {
-      setLoadingCarriers(false)
+      setLoadingCarriers(false);
     }
-  }
+  };
 
   const handleAssignmentChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setAssignmentData({
       ...assignmentData,
       [name]: value,
-    })
-  }
+    });
+  };
 
   const handleAssignOrder = async () => {
     if (!assignmentData.routeId || !assignmentData.carrierId) {
-      setAssignError("Por favor, seleccione una ruta y un transportista.")
-      return
+      setAssignError("Por favor, seleccione una ruta y un transportista.");
+      return;
     }
 
-    setAssignLoading(true)
-    setAssignError("")
-    setAssignSuccess("")
+    setAssignLoading(true);
+    setAssignError("");
+    setAssignSuccess("");
 
     try {
       const response = await api.post("/api/assign-manually", {
         orderId: orderId,
         routeId: Number.parseInt(assignmentData.routeId),
         carrierId: Number.parseInt(assignmentData.carrierId),
-      })
+      });
 
-      setAssignSuccess("Orden asignada exitosamente.")
+      setAssignSuccess("Orden asignada exitosamente.");
 
       // Actualizar los detalles de la orden después de asignar
       setTimeout(() => {
-        fetchOrderDetails()
-        handleCloseAssignModal()
-      }, 1000)
+        fetchOrderDetails();
+        handleCloseAssignModal();
+      }, 1000);
     } catch (error) {
-      console.error("Error al asignar la orden:", error)
-      setAssignError(error.response?.data?.message || "Error al asignar la orden.")
+      console.error("Error al asignar la orden:", error);
+      setAssignError(
+        error.response?.data?.message || "Error al asignar la orden."
+      );
     } finally {
-      setAssignLoading(false)
+      setAssignLoading(false);
     }
-  }
+  };
 
   return (
     <MainLayout>
@@ -271,7 +272,10 @@ const OrderDetail = () => {
                 <span style={styles.routeTitleText}>Información de Envío</span>
               </div>
               {order.status?.toLowerCase() !== "en tránsito" && (
-                <button onClick={handleOpenAssignModal} style={styles.assignButton}>
+                <button
+                  onClick={handleOpenAssignModal}
+                  style={styles.assignButton}
+                >
                   {order.route_id ? "Reasignar" : "Asignar Ruta"}
                 </button>
               )}
@@ -283,35 +287,47 @@ const OrderDetail = () => {
                   <h4 style={styles.routeSubtitle}>Ruta Asignada</h4>
                   <div style={styles.routeCard}>
                     <div style={styles.routeCardHeader}>
-                      <span style={styles.routeName}>{routeDetails.name || `Ruta #${routeDetails.id}`}</span>
+                      <span style={styles.routeName}>
+                        {routeDetails.name || `Ruta #${routeDetails.id}`}
+                      </span>
                     </div>
                     <div style={styles.routeCardBody}>
                       <div style={styles.routeItem}>
                         <span style={styles.routeItemIcon}>🏠</span>
                         <div style={styles.routeItemContent}>
                           <span style={styles.routeItemLabel}>Origen:</span>
-                          <span style={styles.routeItemValue}>{routeDetails.origin}</span>
+                          <span style={styles.routeItemValue}>
+                            {routeDetails.origin}
+                          </span>
                         </div>
                       </div>
                       <div style={styles.routeItem}>
                         <span style={styles.routeItemIcon}>📍</span>
                         <div style={styles.routeItemContent}>
                           <span style={styles.routeItemLabel}>Destino:</span>
-                          <span style={styles.routeItemValue}>{routeDetails.destination}</span>
+                          <span style={styles.routeItemValue}>
+                            {routeDetails.destination}
+                          </span>
                         </div>
                       </div>
                       <div style={styles.routeItem}>
                         <span style={styles.routeItemIcon}>📏</span>
                         <div style={styles.routeItemContent}>
                           <span style={styles.routeItemLabel}>Distancia:</span>
-                          <span style={styles.routeItemValue}>{routeDetails.distance} km</span>
+                          <span style={styles.routeItemValue}>
+                            {routeDetails.distance} km
+                          </span>
                         </div>
                       </div>
                       <div style={styles.routeItem}>
                         <span style={styles.routeItemIcon}>⏱️</span>
                         <div style={styles.routeItemContent}>
-                          <span style={styles.routeItemLabel}>Tiempo estimado:</span>
-                          <span style={styles.routeItemValue}>{routeDetails.estimated_time} horas</span>
+                          <span style={styles.routeItemLabel}>
+                            Tiempo estimado:
+                          </span>
+                          <span style={styles.routeItemValue}>
+                            {routeDetails.estimated_time} horas
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -323,35 +339,54 @@ const OrderDetail = () => {
                     <h4 style={styles.routeSubtitle}>Transportista Asignado</h4>
                     <div style={styles.carrierCard}>
                       <div style={styles.carrierCardHeader}>
-                        <span style={styles.carrierName}>{carrierDetails.name}</span>
+                        <span style={styles.carrierName}>
+                          {carrierDetails.name}
+                        </span>
                       </div>
                       <div style={styles.carrierCardBody}>
                         <div style={styles.carrierItem}>
                           <span style={styles.carrierItemIcon}>🚚</span>
                           <div style={styles.carrierItemContent}>
-                            <span style={styles.carrierItemLabel}>Vehículo:</span>
-                            <span style={styles.carrierItemValue}>{carrierDetails.vehicle_type}</span>
+                            <span style={styles.carrierItemLabel}>
+                              Vehículo:
+                            </span>
+                            <span style={styles.carrierItemValue}>
+                              {carrierDetails.vehicle_type} -{" "}
+                              {carrierDetails.vehicle_model}
+                            </span>
                           </div>
                         </div>
                         <div style={styles.carrierItem}>
                           <span style={styles.carrierItemIcon}>⚖️</span>
                           <div style={styles.carrierItemContent}>
-                            <span style={styles.carrierItemLabel}>Capacidad:</span>
-                            <span style={styles.carrierItemValue}>{carrierDetails.capacity} kg</span>
+                            <span style={styles.carrierItemLabel}>
+                              Capacidad:
+                            </span>
+                            <span style={styles.carrierItemValue}>
+                              {carrierDetails.capacity} kg
+                            </span>
                           </div>
                         </div>
                         <div style={styles.carrierItem}>
                           <span style={styles.carrierItemIcon}>📍</span>
                           <div style={styles.carrierItemContent}>
-                            <span style={styles.carrierItemLabel}>Ubicación actual:</span>
-                            <span style={styles.carrierItemValue}>{carrierDetails.current_city}</span>
+                            <span style={styles.carrierItemLabel}>
+                              Ubicación actual:
+                            </span>
+                            <span style={styles.carrierItemValue}>
+                              {carrierDetails.current_city}
+                            </span>
                           </div>
                         </div>
                         <div style={styles.carrierItem}>
                           <span style={styles.carrierItemIcon}>📱</span>
                           <div style={styles.carrierItemContent}>
-                            <span style={styles.carrierItemLabel}>Contacto:</span>
-                            <span style={styles.carrierItemValue}>{carrierDetails.phone}</span>
+                            <span style={styles.carrierItemLabel}>
+                              Contacto:
+                            </span>
+                            <span style={styles.carrierItemValue}>
+                              {carrierDetails.phone}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -362,9 +397,14 @@ const OrderDetail = () => {
             ) : (
               <div style={styles.noRouteAssigned}>
                 <div style={styles.noRouteIcon}>🚫</div>
-                <p style={styles.noRouteText}>Esta orden aún no tiene ruta ni transportista asignados.</p>
+                <p style={styles.noRouteText}>
+                  Esta orden aún no tiene ruta ni transportista asignados.
+                </p>
                 {order.status?.toLowerCase() !== "en tránsito" && (
-                  <button onClick={handleOpenAssignModal} style={styles.assignButtonLarge}>
+                  <button
+                    onClick={handleOpenAssignModal}
+                    style={styles.assignButtonLarge}
+                  >
                     Asignar Ruta y Transportista
                   </button>
                 )}
@@ -380,14 +420,18 @@ const OrderDetail = () => {
                   <span style={styles.detailIcon}>⚖️</span>
                   <div style={styles.detailInfo}>
                     <span style={styles.detailLabel}>Peso</span>
-                    <span style={styles.detailValue}>{order.package_weight} kg</span>
+                    <span style={styles.detailValue}>
+                      {order.package_weight} kg
+                    </span>
                   </div>
                 </div>
                 <div style={styles.detailItem}>
                   <span style={styles.detailIcon}>📏</span>
                   <div style={styles.detailInfo}>
                     <span style={styles.detailLabel}>Dimensiones</span>
-                    <span style={styles.detailValue}>{order.package_dimensions}</span>
+                    <span style={styles.detailValue}>
+                      {order.package_dimensions}
+                    </span>
                   </div>
                 </div>
                 <div style={styles.detailItem}>
@@ -407,14 +451,18 @@ const OrderDetail = () => {
                   <span style={styles.detailIcon}>👤</span>
                   <div style={styles.detailInfo}>
                     <span style={styles.detailLabel}>Nombre</span>
-                    <span style={styles.detailValue}>{order.recipient_name}</span>
+                    <span style={styles.detailValue}>
+                      {order.recipient_name}
+                    </span>
                   </div>
                 </div>
                 <div style={styles.detailItem}>
                   <span style={styles.detailIcon}>📞</span>
                   <div style={styles.detailInfo}>
                     <span style={styles.detailLabel}>Teléfono</span>
-                    <span style={styles.detailValue}>{order.recipient_phone}</span>
+                    <span style={styles.detailValue}>
+                      {order.recipient_phone}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -428,7 +476,9 @@ const OrderDetail = () => {
                 Dirección de Origen
               </h3>
               <div style={styles.addressContent}>
-                <div style={styles.addressLocation}>{extractCityAndDepartment(order.origin_address)}</div>
+                <div style={styles.addressLocation}>
+                  {extractCityAndDepartment(order.origin_address)}
+                </div>
                 <div style={styles.addressDetail}>{order.origin_address}</div>
               </div>
             </div>
@@ -445,17 +495,27 @@ const OrderDetail = () => {
                 Dirección de Destino
               </h3>
               <div style={styles.addressContent}>
-                <div style={styles.addressLocation}>{extractCityAndDepartment(order.destination_address)}</div>
-                <div style={styles.addressDetail}>{order.destination_address}</div>
+                <div style={styles.addressLocation}>
+                  {extractCityAndDepartment(order.destination_address)}
+                </div>
+                <div style={styles.addressDetail}>
+                  {order.destination_address}
+                </div>
               </div>
             </div>
           </div>
 
           <div style={styles.actionsContainer}>
-            <button style={styles.editButton} onClick={() => alert(`Editar orden ${orderId}`)}>
+            <button
+              style={styles.editButton}
+              onClick={() => alert(`Editar orden ${orderId}`)}
+            >
               Editar Orden
             </button>
-            <button style={styles.deleteButton} onClick={() => alert(`Eliminar orden ${orderId}`)}>
+            <button
+              style={styles.deleteButton}
+              onClick={() => alert(`Eliminar orden ${orderId}`)}
+            >
               Eliminar Orden
             </button>
           </div>
@@ -463,8 +523,13 @@ const OrderDetail = () => {
       ) : (
         <div style={styles.emptyState}>
           <div style={styles.emptyIcon}>🔍</div>
-          <p style={styles.emptyText}>No se encontraron detalles para esta orden.</p>
-          <button onClick={() => navigate("/orders")} style={styles.backButtonEmpty}>
+          <p style={styles.emptyText}>
+            No se encontraron detalles para esta orden.
+          </p>
+          <button
+            onClick={() => navigate("/orders")}
+            style={styles.backButtonEmpty}
+          >
             Volver a la lista de órdenes
           </button>
         </div>
@@ -476,7 +541,10 @@ const OrderDetail = () => {
           <div style={styles.modalContent}>
             <div style={styles.modalHeader}>
               <h3 style={styles.modalTitle}>Asignar Ruta y Transportista</h3>
-              <button onClick={handleCloseAssignModal} style={styles.modalCloseButton}>
+              <button
+                onClick={handleCloseAssignModal}
+                style={styles.modalCloseButton}
+              >
                 ✕
               </button>
             </div>
@@ -487,10 +555,12 @@ const OrderDetail = () => {
                   <strong>Orden:</strong> #{orderId}
                 </p>
                 <p style={styles.orderInfoText}>
-                  <strong>Origen:</strong> {order && extractCityAndDepartment(order.origin_address)}
+                  <strong>Origen:</strong>{" "}
+                  {order && extractCityAndDepartment(order.origin_address)}
                 </p>
                 <p style={styles.orderInfoText}>
-                  <strong>Destino:</strong> {order && extractCityAndDepartment(order.destination_address)}
+                  <strong>Destino:</strong>{" "}
+                  {order && extractCityAndDepartment(order.destination_address)}
                 </p>
                 <p style={styles.orderInfoText}>
                   <strong>Peso:</strong> {order && order.package_weight} kg
@@ -517,14 +587,17 @@ const OrderDetail = () => {
                       <option value="">Seleccione una ruta</option>
                       {routes.map((route) => (
                         <option key={route.id} value={route.id}>
-                          {route.name || `${route.origin} → ${route.destination}`}
+                          {route.name ||
+                            `${route.origin} → ${route.destination}`}
                         </option>
                       ))}
                     </select>
                   </div>
 
                   <div style={styles.formGroup}>
-                    <label style={styles.formLabel}>Seleccionar Transportista:</label>
+                    <label style={styles.formLabel}>
+                      Seleccionar Transportista:
+                    </label>
                     <select
                       name="carrierId"
                       value={assignmentData.carrierId}
@@ -534,27 +607,40 @@ const OrderDetail = () => {
                       <option value="">Seleccione un transportista</option>
                       {carriers.map((carrier) => (
                         <option key={carrier.id} value={carrier.id}>
-                          {carrier.name} - {carrier.vehicle_type} ({carrier.capacity} kg)
+                          {carrier.name} - {carrier.vehicle_type} (
+                          {carrier.capacity} kg)
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  {assignError && <div style={styles.errorMessage}>{assignError}</div>}
+                  {assignError && (
+                    <div style={styles.errorMessage}>{assignError}</div>
+                  )}
 
-                  {assignSuccess && <div style={styles.successMessage}>{assignSuccess}</div>}
+                  {assignSuccess && (
+                    <div style={styles.successMessage}>{assignSuccess}</div>
+                  )}
                 </div>
               )}
             </div>
 
             <div style={styles.modalFooter}>
-              <button onClick={handleCloseAssignModal} style={styles.cancelButton} disabled={assignLoading}>
+              <button
+                onClick={handleCloseAssignModal}
+                style={styles.cancelButton}
+                disabled={assignLoading}
+              >
                 Cancelar
               </button>
               <button
                 onClick={handleAssignOrder}
                 style={styles.assignButtonModal}
-                disabled={assignLoading || !assignmentData.routeId || !assignmentData.carrierId}
+                disabled={
+                  assignLoading ||
+                  !assignmentData.routeId ||
+                  !assignmentData.carrierId
+                }
               >
                 {assignLoading ? "Asignando..." : "Asignar"}
               </button>
@@ -563,8 +649,8 @@ const OrderDetail = () => {
         </div>
       )}
     </MainLayout>
-  )
-}
+  );
+};
 
 // Estilos mejorados
 const styles = {
@@ -1206,7 +1292,6 @@ const styles = {
     "0%": { transform: "rotate(0deg)" },
     "100%": { transform: "rotate(360deg)" },
   },
-}
+};
 
-export default OrderDetail
-
+export default OrderDetail;
